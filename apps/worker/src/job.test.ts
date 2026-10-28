@@ -238,4 +238,38 @@ describe('runJob', () => {
     expect(compileCall.cmd.join(' ')).not.toContain('rm');
     expect(compileCall.cmd.join(' ')).not.toContain('/etc/passwd');
   });
+
+  it('skips compile and chmod for interpreted languages (python)', async () => {
+    const runtime = new MockRuntime();
+    const spec = {
+      jobId: 'job-python',
+      language: 'python',
+      runtimeProfile: 'python-stable',
+      files: [{ name: 'main.py', content: 'print("hi\n")' }],
+      stdin: '',
+      limits: {
+        wallClockMs: 5000,
+        memoryBytes: 256 * 1024 * 1024,
+        cpuCpus: 1.0,
+        pidsLimit: 32,
+        outputBytes: 1 * 1024 * 1024,
+        workspaceBytes: 64 * 1024 * 1024,
+      },
+    };
+    runtime.queueOutcome({ exitCode: 0, stdout: 'hi\n', stderr: '', timedOut: false });
+
+    const result = await runJob(spec, runtime);
+
+    expect(result.status).toBe('succeeded');
+    expect(result.phase).toBe('run');
+    expect(result.stdout).toBe('hi\n');
+    expect(result.exitCode).toBe(0);
+
+    // Only one exec call: the run phase. No compile, no chmod.
+    expect(runtime.execCalls.length).toBe(1);
+    expect(runtime.execCalls[0].cmd).toEqual(['python', '/workspace/main.py']);
+
+    // Container still removed after completion.
+    expect(runtime.removedIds.length).toBe(1);
+  });
 });

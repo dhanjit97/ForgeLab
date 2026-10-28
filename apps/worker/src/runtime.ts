@@ -111,7 +111,10 @@ export class DockerRuntime implements ContainerRuntime {
   private imageFor(profile: string): string {
     // Spike: image referenced by tag. Production pins by immutable digest (ADR-001).
     const images: Record<string, string> = {
+      'c-stable': 'gcc:13',
       'cpp-stable': 'gcc:13',
+      'rust-stable': 'rust:1',
+      'python-stable': 'python:3.11-slim',
     };
     const image = images[profile];
     if (!image) {

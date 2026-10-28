@@ -30,60 +30,62 @@ export async function runJob(spec: JobSpec, runtime: ContainerRuntime): Promise<
       await container.copyToContainer(`${profile.workdir}/${file.name}`, file.content);
     }
 
-    // Phase 1: compile (no stdin).
-    const compile = await container.exec(profile.compile.cmd, undefined, {
-      wallClockMs: spec.limits.wallClockMs,
-      outputBytes: spec.limits.outputBytes,
-    });
+    // Phase 1: compile (skipped for interpreted languages with no compile command).
+    if (profile.compile.cmd.length > 0) {
+      const compile = await container.exec(profile.compile.cmd, undefined, {
+        wallClockMs: spec.limits.wallClockMs,
+        outputBytes: spec.limits.outputBytes,
+      });
 
-    if (compile.timedOut) {
-      return {
-        status: 'timed_out',
-        phase: 'compile',
-        stdout: '',
-        stderr: `Compilation exceeded ${spec.limits.wallClockMs}ms`,
-        diagnostics: [{ phase: 'compile', message: 'Compilation timed out' }],
-        exitCode: null,
-        durationMs: Date.now() - startMs,
-        truncated: false,
-      };
-    }
-    if (compile.exitCode !== 0) {
-      return {
-        status: 'compile_error',
-        phase: 'compile',
-        stdout: compile.stdout,
-        stderr: compile.stderr,
-        diagnostics: [
-          {
-            phase: 'compile',
-            message: compile.stderr || 'Compilation failed',
-          },
-        ],
-        exitCode: compile.exitCode,
-        durationMs: Date.now() - startMs,
-        truncated: false,
-      };
-    }
+      if (compile.timedOut) {
+        return {
+          status: 'timed_out',
+          phase: 'compile',
+          stdout: '',
+          stderr: `Compilation exceeded ${spec.limits.wallClockMs}ms`,
+          diagnostics: [{ phase: 'compile', message: 'Compilation timed out' }],
+          exitCode: null,
+          durationMs: Date.now() - startMs,
+          truncated: false,
+        };
+      }
+      if (compile.exitCode !== 0) {
+        return {
+          status: 'compile_error',
+          phase: 'compile',
+          stdout: compile.stdout,
+          stderr: compile.stderr,
+          diagnostics: [
+            {
+              phase: 'compile',
+              message: compile.stderr || 'Compilation failed',
+            },
+          ],
+          exitCode: compile.exitCode,
+          durationMs: Date.now() - startMs,
+          truncated: false,
+        };
+      }
 
-    // Make the compiled binary executable (gcc -o may not set +x on all
-    // filesystems; enforce it here before running).
-    const binaryPath = `${profile.workdir}/${profile.binaryName}`;
-    const chmod = await container.exec(['chmod', '+x', binaryPath], undefined, {
-      wallClockMs: spec.limits.wallClockMs,
-      outputBytes: spec.limits.outputBytes,
-    });
-    if (chmod.exitCode !== 0) {
-      return {
-        status: 'compile_error',
-        phase: 'compile',
-        stdout: chmod.stdout,
-        stderr: chmod.stderr,
-        diagnostics: [{ phase: 'compile', message: 'Failed to make binary executable' }],
-        exitCode: chmod.exitCode,
-        durationMs: Date.now() - startMs,
-        truncated: false,
-      };
+      // Make the compiled binary executable (gcc/rustc -o may not set +x on all
+      // filesystems; enforce it here before running).
+      const binaryPath = `${profile.workdir}/${profile.binaryName}`;
+      const chmod = await container.exec(['chmod', '+x', binaryPath], undefined, {
+        wallClockMs: spec.limits.wallClockMs,
+        outputBytes: spec.limits.outputBytes,
+      });
+      if (chmod.exitCode !== 0) {
+        return {
+          status: 'compile_error',
+          phase: 'compile',
+          stdout: chmod.stdout,
+          stderr: chmod.stderr,
+          diagnostics: [{ phase: 'compile', message: 'Failed to make binary executable' }],
+          exitCode: chmod.exitCode,
+          durationMs: Date.now() - startMs,
+          truncated: false,
+        };
+      }
     }
 
     // Phase 2: run (stdin passed through if supported).
