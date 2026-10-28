@@ -1,0 +1,43 @@
+{
+  "name": "forgelab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ForgeLab — public learning platform for C, C++, Rust, and Python with sandboxed browser execution",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "build": "npm run build --workspaces",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "vitest run",
+    "test:ui": "vitest run --project=web",
+    "test:api": "vitest run --project=api",
+    "test:shared": "vitest run --project=shared",
+    "validate:content": "npm run validate:content --workspace=@forgelab/shared"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.12.0",
+    "prettier": "^3.4.0",
+    "typescript": "~5.7.0",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@11.6.2"
+}

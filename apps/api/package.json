@@ -1,0 +1,30 @@
+{
+  "name": "@forgelab/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -b",
+    "start": "node dist/src/index.js",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:migrate": "tsx src/migrate.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "fastify": "^4.28.1",
+    "@fastify/cookie": "^6.0.0",
+    "pg": "^8.13.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
